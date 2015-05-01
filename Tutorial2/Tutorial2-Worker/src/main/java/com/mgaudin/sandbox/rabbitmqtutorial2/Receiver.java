@@ -24,19 +24,21 @@ public class Receiver implements DisposableBean {
         this.connection = factory.newConnection();
         this.channel = connection.createChannel();
 
-        this.channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+        this.channel.queueDeclarePassive(QUEUE_NAME);
     }
 
     public void receive() throws IOException, InterruptedException {
         QueueingConsumer consumer = new QueueingConsumer(channel);
-        channel.basicConsume(QUEUE_NAME, true, consumer);
+        channel.basicConsume(QUEUE_NAME, false, consumer);
 
         while (true) {
             QueueingConsumer.Delivery delivery = consumer.nextDelivery();
             String message = new String(delivery.getBody());
             log.info(" [x] Processing '" + message + "'");
-            Thread.sleep(3000);
+            Thread.sleep(100);
             log.info(" [x] Processing of " + message + " done");
+
+            channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
         }
     }
 
